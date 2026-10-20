@@ -1,0 +1,8 @@
+# aiventure-legal: sursa unică a celor 14 pagini /legal/* pentru toate domeniile rețelei AiVenture.
+# Numele trebuie să rămână identic cu Worker-ul existent din Cloudflare, ca rutele <domeniu>/legal/* să nu se piardă.
+name = "aiventure-legal-worker"
+main = "src/index.js"
+compatibility_date = "2026-10-01"
+# Variabilele setate din panoul Cloudflare (de ex. ECBTAX_APPROVED) rămân neatinse la deploy.
+keep_vars = true
+# Rutele (<domeniu>/legal/*) rămân cele din Cloudflare; nu sunt declarate aici.
