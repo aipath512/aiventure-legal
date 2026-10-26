@@ -1,43 +1,25 @@
-// LEGAL WORKER v1.10 - 2026-10-20
-// Change vs v1.9 (audit of the 14 /legal/* pages of firmsfinder.eu):
-//  - FIRM_DEFAULTS.address corrected: "Drumul Pădurea Pustnicul" (was "Pustnicu"). Affects legal-notice, legal-contact and their meta description.
-//  - primaryImageOfPage removed from the WebPage node (the og:image stays in the meta tags).
-//  - Internal links of the page navigation now end with "/" (same form as the canonical URL).
-//  - makeDescription: no more truncation with "…" in the middle of a sentence; the text is cut at the last comma that leaves >= 70 characters
-//    and closed with a full stop; the word-boundary cut with "…" remains only as a last resort.
-//  - LEGAL_DATE = 2026-10-20 (the text really changed). It MUST equal <lastmod> of the 14 /legal/ URLs in firmsfinder.eu/sitemap.xml.
-//  Nothing else changes: other hosts, ?lang=en|fr, strip endpoint, ecbtax.com pages are unchanged.
-// Change vs v1.8: ecbtax.com is a new host (firm ECB TAX ACCOUNTING & HR SRL as parameters, Romanian). It serves ONLY two pages,
-//  /legal/terms and /legal/ai-transparency, with ECBTAX-specific texts and the full SCHEMA etalon (47 checks), so that
-//  WebPage.usageInfo and WebSite.publishingPrinciples on ecbtax.com point to real pages. Cloudflare routes to add (more specific than
-//  the existing ecbtax.com/legal/* route of the "Kit legal" Worker, which stays untouched): ecbtax.com/legal/terms* and
-//  ecbtax.com/legal/ai-transparency*. The ecbtax.com pages answer 503 until the variable ECBTAX_APPROVED = 1 is set (owner approval of the texts).
-//  Nothing changes for the other hosts.
-// Change vs v1.7: firmsfinder.eu (Romanian pages) get the full SCHEMA etalon (47 checks: M1-M24 meta, J1-J23 JSON-LD):
-//  title "<Title> | FirmsFinder AI", description, canonical WITH trailing slash, robots with max-* tokens, og:* / twitter:*,
-//  meta author, meta referrer, ONE JSON-LD @graph (WebPage, WebSite with publishingPrinciples, Organization, BreadcrumbList Acasa > title),
-//  visible "Ultima actualizare" date = LEGAL_DATE (must equal the <lastmod> of the page in firmsfinder.eu/sitemap.xml).
-//  All other domains and the ?lang=en|fr variants are unchanged (v1.7 output).
-//  /legal/<slug> and /legal/<slug>/ are both served. Strip endpoint unchanged.
-// Change vs v1.6: /legal/strip.html accepts ?host=<network domain>. Other Workers (aiventure-legal-worker, aiventure-gdpr) request
-// https://firmsfinder.eu/legal/strip.html?host=<their domain> from a DIFFERENT zone, so no service binding is needed.
-// The host parameter only selects the language of the labels (it must be in ALLOWED_HOSTS); links stay relative (/legal/...).
-// Change vs v1.5: new endpoint GET /legal/strip.html = the ONE source of the slim legal strip
-//  (AIVENTURE S.R.L. . CUI + the 14 legal links, labels in the domain's language, links relative to the same domain).
-//  aiventure-legal-worker and aiventure-gdpr fetch it and insert it into the page, so the text lives only here.
-//  The fragment is sent with X-Robots-Tag noindex. Nothing else changed.
-// Change vs v1.4 (owner answers of 18 Oct 2026):
-//  - Pages exist in RO, EN and FR. Language follows the domain (LANG_BY_HOST), override with ?lang=ro|en|fr.
-//    Domains not listed default to EN. A small RO / EN / FR switcher is shown on every page.
-//  - floride-e2.com (test domain) is served noindex (meta + X-Robots-Tag). All other domains: index,follow.
-//  - Consent-log retention (about 13 months) and the Cloudflare technical-cookies sentence confirmed by the owner.
-// Earlier: v1.4 removed the internal code from the public page; v1.3 ended pilot mode (all domains, always published,
-// only /legal/* handled, everything else passes through); v1.2 firm data = parameters (FIRM_DEFAULTS, optional KV "firm:<id>").
-// Routes: <domain>/legal/* for each domain.
-const ALLOWED_HOSTS = new Set(["1clic-ia.eu", "1clic-ia.fr", "3webobs.com", "5thelement.ai", "ai-lens.eu", "aireadyinjector.com", "aiventure.ro", "aiventure.uk", "b2b-ai-library.org", "eu-112.eu", "eu-112.ro", "eu-ai-act-ready.eu", "eu-ai-act.ro", "eu-ai-audit.eu", "eu-ai-ready.eu", "ecbtax.com", "firmsfinder.eu", "floride-e2.com", "the3webs.com"]);
-const NOINDEX_HOSTS = new Set(["floride-e2.com"]);
+// LEGAL WORKER v2.0 - 2026-10-26
+// Change vs v1.10 (owner decisions of 26 Oct 2026: ONE legal page instead of 14):
+//  - ONE page /legal/ with the 14 documents as sections. Each section has its own anchor (id = the old slug):
+//    /legal/#privacy, /legal/#terms, /legal/#cookies, /legal/#disclaimer, /legal/#legal-notice, /legal/#gdpr-rights, /legal/#data-retention,
+//    /legal/#security, /legal/#acceptable-use, /legal/#ai-transparency, /legal/#eu-ai-act, /legal/#human-oversight, /legal/#accessibility,
+//    /legal/#legal-contact. A table of contents sits at the top of the page.
+//  - The old URLs /legal/<slug> and /legal/<slug>/ answer 301 -> /legal/#<slug> (with ?lang=xx kept when it was given), so no existing link breaks.
+//  - /legal/strip.html (the footer strip used by the other Workers) now links to /legal/#<slug>: one click lands on the right section.
+//  - Schema.org: WebPage.usageInfo -> /legal/#terms, WebSite.publishingPrinciples -> /legal/#ai-transparency, WebPage.hasPart lists the 14 sections.
+//  - Title and description exist in RO, EN and FR. The page stays INDEXABLE (owner decision): index,follow, in the sitemap.
+//  - The legal notice section lists the official AiVenture profiles (FIRM_DEFAULTS.social), same on every domain.
+//  - LEGAL_DATE = 2026-10-26 (the structure and the notice really changed). It MUST equal <lastmod> of https://<domain>/legal/ in the
+//    sitemap.xml of EVERY network site, and the 14 old /legal/<slug>/ entries must be removed from those sitemaps.
+//  - ecbtax.com, floride-e2.com and aiventure.uk are no longer part of the AiVenture network: their code is removed.
+//    A host that is not in ALLOWED_HOSTS is now passed through to its origin (it used to get 403), so a forgotten route does no harm.
+//  Unchanged: firm parameters (FIRM_DEFAULTS, optional KV "firm:<id>"), language by domain (?lang=ro|en|fr), the 14 texts.
+// Earlier: v1.10 address "Pustnicul", no primaryImageOfPage; v1.9 ecbtax.com pages; v1.7 SCHEMA etalon for firmsfinder.eu;
+//  v1.6 /legal/strip.html?host=<domain>; v1.5 strip endpoint; v1.4 RO/EN/FR; v1.3 all domains, always published; v1.2 firm data = parameters.
+// Routes: <domain>/legal/* for each domain (configured in Cloudflare, not in the repo).
+const ALLOWED_HOSTS = new Set(["1clic-ia.eu", "1clic-ia.fr", "3webobs.com", "5thelement.ai", "ai-lens.eu", "aireadyinjector.com", "aiventure.ro", "b2b-ai-library.org", "eu-112.eu", "eu-112.ro", "eu-ai-act-ready.eu", "eu-ai-act.ro", "eu-ai-audit.eu", "eu-ai-ready.eu", "firmsfinder.eu", "the3webs.com"]);
 const LANG_BY_HOST = {
-  "aiventure.ro": "ro", "eu-112.ro": "ro", "eu-ai-act.ro": "ro", "ecbtax.com": "ro", "firmsfinder.eu": "ro", "1clic-ia.eu": "ro", "floride-e2.com": "ro",
+  "aiventure.ro": "ro", "eu-112.ro": "ro", "eu-ai-act.ro": "ro", "firmsfinder.eu": "ro", "1clic-ia.eu": "ro",
   "1clic-ia.fr": "fr"
   // every other domain: "en"
 };
@@ -45,32 +27,9 @@ const LANGS = ["ro", "en", "fr"];
 
 // ---- SCHEMA ETALON per site (same values as the SCHEMA parameters of b2b-ai-library.org, site_defaults["firmsfinder.eu"]) ----
 // LEGAL_DATE = date of the last real change of the legal texts; it is shown on the page, used as dateModified/datePublished
-// and MUST be identical to <lastmod> of these pages in the site's sitemap.xml. Change it only when the texts really change.
-const LEGAL_DATE = "2026-10-20";
+// and MUST be identical to <lastmod> of /legal/ in the site's sitemap.xml. Change it only when the texts really change.
+const LEGAL_DATE = "2026-10-26";
 const ETALON = {
-  "ecbtax.com": {
-    site_name: "ECBTAX",
-    title_suffix: " | ECBTAX",
-    robots: "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
-    og_type: "website",
-    og_locale: "ro_RO",
-    html_lang: "ro",
-    in_language: "ro-RO",
-    twitter_card: "summary_large_image",
-    twitter_site: "@aipath512",
-    image: "https://ecbtax.com/assets/ecbtax-servicii-og-1200x630.jpg",
-    image_alt: "ECBTAX — Servicii de contabilitate, fiscalitate și HR",
-    image_width: "1200",
-    image_height: "630",
-    author_meta: "ECB TAX ACCOUNTING & HR SRL",
-    referrer: "strict-origin-when-cross-origin",
-    home_name: "Acasă",
-    org_id: "https://ecbtax.com/#organization",
-    org_name: "ECB TAX ACCOUNTING & HR SRL",
-    org_url: "https://ecbtax.com/",
-    usage_info: "/legal/terms",
-    publishing_principles: "/legal/ai-transparency"
-  },
   "firmsfinder.eu": {
     site_name: "FirmsFinder AI",
     title_suffix: " | FirmsFinder AI",
@@ -91,8 +50,8 @@ const ETALON = {
     org_id: "https://aiventure.ro/#organization",
     org_name: "AiVenture S.R.L.",
     org_url: "https://aiventure.ro/",
-    usage_info: "/legal/terms",
-    publishing_principles: "/legal/ai-transparency"
+    usage_info: "/legal/#terms",
+    publishing_principles: "/legal/#ai-transparency"
   }
 };
 
@@ -110,6 +69,17 @@ const FIRM_DEFAULTS = {
   phone: "+40 737 123 540",
   reg_date: "07.03.2025",
   cert_date: "10.03.2025",
+  // official AiVenture profiles, shown in the legal notice (same on every network domain)
+  social: [
+    { label: "LinkedIn", url: "https://www.linkedin.com/company/107338970" },
+    { label: "LinkedIn (5thelement.ai)", url: "https://www.linkedin.com/showcase/5thelement-ai" },
+    { label: "X", url: "https://x.com/aipath512" },
+    { label: "YouTube", url: "https://www.youtube.com/@AIVenture-q8u" },
+    { label: "Medium", url: "https://medium.com/@aipath512" },
+    { label: "Facebook", url: "https://www.facebook.com/people/Aiventure/61573220584246" },
+    { label: "Reddit", url: "https://www.reddit.com/user/AiVentureRO" },
+    { label: "Crunchbase", url: "https://www.crunchbase.com/organization/aiventure-s-r-l" }
+  ],
   // texts that depend on the language (RO is the default; en / fr override)
   activity: "6210 – Activități de realizare a soft-ului la comandă (software orientat client)",
   retention_contact: "12 luni de la ultimul contact",
@@ -131,9 +101,12 @@ const FIRM_DEFAULTS = {
 };
 
 const UI = {
-  ro: { home: "← Acasă", docs: "Documente juridice", lang: "Limba", updated: "Ultima actualizare" },
-  en: { home: "← Home", docs: "Legal documents", lang: "Language", updated: "Last updated" },
-  fr: { home: "← Accueil", docs: "Documents juridiques", lang: "Langue", updated: "Dernière mise à jour" }
+  ro: { home: "← Acasă", docs: "Documente juridice", lang: "Limba", updated: "Ultima actualizare", toc: "Cuprins", top: "↑ Cuprins", official: "Profiluri oficiale",
+        desc: "Documente juridice {{name}}: mențiuni legale, confidențialitate, cookies, termeni, GDPR, securitate, transparență AI și Regulamentul UE privind IA." },
+  en: { home: "← Home", docs: "Legal documents", lang: "Language", updated: "Last updated", toc: "Contents", top: "↑ Contents", official: "Official profiles",
+        desc: "{{name}} legal documents: legal notice, privacy, cookies, terms, GDPR rights, security, AI transparency and the EU AI Act." },
+  fr: { home: "← Accueil", docs: "Documents juridiques", lang: "Langue", updated: "Dernière mise à jour", toc: "Sommaire", top: "↑ Sommaire", official: "Profils officiels",
+        desc: "Documents juridiques {{name}} : mentions légales, confidentialité, cookies, conditions, RGPD, sécurité, transparence de l'IA et règlement européen sur l'IA." }
 };
 
 // Page texts. Tokens: {{name}} {{cui}} {{reg}} {{euid}} {{address}} {{rep_name}} {{rep_role}} {{email}} {{phone}}
@@ -375,52 +348,23 @@ const DOCS = [
       "E-mail pour les demandes juridiques et RGPD : {{email}}. Téléphone : {{phone}}."]]
   }]
 ];
-
-// ---- ECBTAX (host ecbtax.com): firm parameters and the two pages it serves ----
-// Texts are drafts adapted from the AiVenture generic texts; they must be approved by ECBTAX before ECBTAX_APPROVED = 1.
-const FIRM_BY_HOST = {
-  "ecbtax.com": {
-    id: "ecbtax", brand: "ECBTAX", name: "ECB TAX ACCOUNTING & HR SRL", cui: "35136588",
-    address: "Str. Nicolae G. Caramfil 61C, et. 3, București, Sector 1",
-    email: "ecbtax@gmail.com", phone: "+40 755 110 012"
-  }
-};
-const DOCS_BY_HOST = {
-  "ecbtax.com": [
-    ["terms", { ro: ["Termeni și condiții", [
-      "Acest site este operat de {{name}} (ECBTAX), CUI {{cui}}, cu sediul în {{address}}, și prezintă servicii de contabilitate, calculul salariilor, fiscalitate și HR.",
-      "Descrierile publice de pe site au caracter informativ și nu constituie ofertă contractuală fermă. Serviciile se prestează pe baza unui contract încheiat între ECBTAX și client.",
-      "Prețurile, livrabilele, termenele, condițiile de plată și răspunderea contractuală se stabilesc prin oferta și contractul acceptate de părți.",
-      "Informațiile de pe site au caracter general și nu înlocuiesc consultanța personalizată pentru situația concretă a fiecărui client.",
-      "Utilizatorii trebuie să respecte legea, drepturile terților și limitele tehnice ale funcțiilor online ale site-ului.",
-      "Orice limitare a răspunderii se aplică numai în măsura permisă de legislația aplicabilă.",
-      "Întrebările privind acești termeni se trimit la {{email}} sau la telefon {{phone}}."]] }],
-    ["ai-transparency", { ro: ["Transparența sistemelor AI", [
-      "Site-ul ECBTAX folosește date structurate și funcții bazate pe AI: fișiere publice citibile de mașini (de exemplu ai.json și ai-proof.json), marcaje schema.org și un agent AI de calcul salarial care răspunde prin protocolul A2A.",
-      "Rezultatele generate automat, inclusiv calculele agentului AI, pot fi incomplete sau inexacte și trebuie verificate de un specialist înaintea deciziilor cu efect fiscal sau juridic.",
-      "Documentele din Trust Center sunt însoțite de hash-uri SHA-256 și de mărci de timp OpenTimestamps, care permit verificarea integrității lor; ele nu înlocuiesc verificarea la organismul profesional emitent.",
-      "Funcțiile bazate pe AI se identifică acolo unde obligațiile aplicabile impun transparență, inclusiv Regulamentul (UE) 2024/1689.",
-      "Întrebările privind sistemele AI de pe site se trimit la {{email}}."]] }]
-  ]
-};
-const docsFor = host => DOCS_BY_HOST[host] || DOCS;
-
 const MISSING = "[de completat]";
 const escapeHtml = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const route = slug => '/legal/' + slug;
+const PAGE = '/legal/';
+const anchor = slug => PAGE + '#' + slug;
+const docTitle = (slug, lang) => DOCS.find(d => d[0] === slug)[1][lang][0];
 
-async function loadFirm(env, host) {
-  const base = FIRM_BY_HOST[host] ? { ...FIRM_DEFAULTS, ...FIRM_BY_HOST[host] } : FIRM_DEFAULTS;
+async function loadFirm(env) {
   let rec = {};
   if (env.FIRMS_KV) {
     try {
-      const raw = await env.FIRMS_KV.get('firm:' + (FIRM_BY_HOST[host] ? base.id : (env.FIRM_ID || FIRM_DEFAULTS.id)));
+      const raw = await env.FIRMS_KV.get('firm:' + (env.FIRM_ID || FIRM_DEFAULTS.id));
       if (raw) rec = JSON.parse(raw);
     } catch { /* invalid or missing record: defaults stay */ }
   }
   const i18n = {};
   for (const l of ['en', 'fr']) i18n[l] = { ...FIRM_DEFAULTS.i18n[l], ...((rec.i18n && rec.i18n[l]) || {}) };
-  return { ...base, ...rec, representative: { ...base.representative, ...(rec.representative || {}) }, i18n };
+  return { ...FIRM_DEFAULTS, ...rec, representative: { ...FIRM_DEFAULTS.representative, ...(rec.representative || {}) }, i18n };
 }
 
 function fill(text, firm, lang) {
@@ -441,31 +385,9 @@ function pickLang(host, url) {
   return { lang: LANG_BY_HOST[host] || 'en', explicit: false };
 }
 
-// meta description: the first paragraphs of the page, at most 155 characters.
-// v1.10: when the next paragraph does not fit, it is cut at the last comma that leaves >= 70 characters and closed with a full stop;
-// only if there is no such comma, the cut is made at a word boundary and closed with "…".
-function makeDescription(paragraphs, firm, lang) {
-  let out = '';
-  for (const p of paragraphs) {
-    const t = fill(p, firm, lang).replace(/\s+/g, ' ').trim();
-    const next = out ? out + ' ' + t : t;
-    if (next.length <= 155) { out = next; continue; }
-    if (out.length < 70) {
-      const cut = next.slice(0, 154);
-      const comma = cut.lastIndexOf(', ');
-      if (comma >= 70) {
-        out = cut.slice(0, comma).replace(/[\s,;:.\-–—]+$/, '') + '.';
-      } else {
-        out = cut.slice(0, Math.max(cut.lastIndexOf(' '), 60)).replace(/[\s,;:.\-–—]+$/, '') + '…';
-      }
-    }
-    break;
-  }
-  return out;
-}
-
-function etalonHead(host, slug, title, description, e) {
-  const pageUrl = 'https://' + host + route(slug) + '/';
+// Head of the single page. ETALON hosts (firmsfinder.eu, Romanian) get the full SCHEMA set: meta + ONE JSON-LD @graph.
+function etalonHead(host, title, description, e, sections) {
+  const pageUrl = 'https://' + host + PAGE;
   const origin = 'https://' + host;
   const fullTitle = title + e.title_suffix;
   const a = escapeHtml;
@@ -479,7 +401,8 @@ function etalonHead(host, slug, title, description, e) {
         isPartOf: { '@id': origin + '/#website' }, inLanguage: e.in_language,
         dateModified: LEGAL_DATE, datePublished: LEGAL_DATE, copyrightYear: Number(LEGAL_DATE.slice(0, 4)),
         isAccessibleForFree: true, publisher: org, author: org, creator: org, copyrightHolder: org,
-        usageInfo: origin + e.usage_info, breadcrumb: { '@id': pageUrl + '#breadcrumb' }
+        usageInfo: origin + e.usage_info, breadcrumb: { '@id': pageUrl + '#breadcrumb' },
+        hasPart: sections.map(([slug, name]) => ({ '@type': 'WebPageElement', '@id': pageUrl + '#' + slug, name, url: pageUrl + '#' + slug }))
       },
       {
         '@type': 'WebSite', '@id': origin + '/#website', url: origin + '/', name: e.site_name,
@@ -523,28 +446,37 @@ function etalonHead(host, slug, title, description, e) {
   ].join('');
 }
 
-function documentHTML(host, slug, lang, explicit, firm) {
+function pageHTML(host, lang, explicit, firm) {
   const ui = UI[lang];
-  const q = explicit ? '?lang=' + lang : '';
-  const DL = docsFor(host);
-  const doc = DL.find(d => d[0] === slug)[1][lang];
-  const title = doc[0], paragraphs = doc[1];
-  const links = DL.map(([s, t]) => '<li><a href="' + route(s) + '/' + q + '">' + escapeHtml(t[lang][0]) + '</a></li>').join('');
-  const switcher = DOCS_BY_HOST[host] ? '<strong>' + lang.toUpperCase() + '</strong>' : LANGS.map(l => l === lang ? '<strong>' + l.toUpperCase() + '</strong>' : '<a href="' + route(slug) + '/?lang=' + l + '" hreflang="' + l + '">' + l.toUpperCase() + '</a>').join(' · ');
+  const a = escapeHtml;
+  const title = ui.docs;
+  const description = fill(ui.desc, firm, lang);
+  const sections = DOCS.map(([slug, t]) => [slug, t[lang][0]]);
   const etalon = ETALON[host] && lang === ETALON[host].html_lang ? ETALON[host] : null;
-  let headMeta, updated = '';
-  if (etalon) {
-    headMeta = etalonHead(host, slug, title, makeDescription(paragraphs, firm, lang), etalon);
-    updated = '<p><small>' + escapeHtml(ui.updated) + ': <time datetime="' + LEGAL_DATE + '">' + LEGAL_DATE + '</time></small></p>';
-  } else {
-    const robots = NOINDEX_HOSTS.has(host) ? 'noindex,nofollow' : 'index,follow';
-    headMeta = '<meta name="robots" content="' + robots + '"><title>' + escapeHtml(title) + ' — ' + escapeHtml(firm.brand) + '</title><link rel="canonical" href="https://' + host + route(slug) + '">';
-  }
-  return '<!doctype html><html lang="' + lang + '"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' + headMeta + '<style>body{font:17px/1.65 system-ui,sans-serif;max-width:850px;margin:40px auto;padding:0 20px;color:#17212c}a{color:#087b86}nav ul{columns:2}main{margin:2rem 0}small{color:#555}</style></head><body><header><a href="/">' + escapeHtml(ui.home) + '</a> <small style="float:right">' + escapeHtml(ui.lang) + ': ' + switcher + '</small></header><main><h1>' + escapeHtml(title) + '</h1>' + paragraphs.map(p => '<p>' + escapeHtml(fill(p, firm, lang)) + '</p>').join('') + updated + '</main><nav aria-label="' + escapeHtml(ui.docs) + '"><h2>' + escapeHtml(ui.docs) + '</h2><ul>' + links + '</ul></nav><footer><small>' + escapeHtml(firm.name) + '</small></footer></body></html>';
+  const headMeta = etalon
+    ? etalonHead(host, title, description, etalon, sections)
+    : '<meta name="robots" content="index,follow"><title>' + a(title) + ' — ' + a(firm.brand) + '</title><meta name="description" content="' + a(description) + '"><link rel="canonical" href="https://' + host + PAGE + '">';
+  const switcher = LANGS.map(l => l === lang ? '<strong>' + l.toUpperCase() + '</strong>' : '<a href="' + PAGE + '?lang=' + l + '" hreflang="' + l + '">' + l.toUpperCase() + '</a>').join(' · ');
+  const toc = sections.map(([slug, name]) => '<li><a href="#' + slug + '">' + a(name) + '</a></li>').join('');
+  const body = DOCS.map(([slug, t]) => {
+    const [name, paragraphs] = t[lang];
+    let extra = '';
+    if (slug === 'legal-notice' && Array.isArray(firm.social) && firm.social.length) {
+      extra = '<p>' + a(ui.official) + ':</p><ul>' + firm.social.map(s => '<li><a href="' + a(s.url) + '" rel="me noopener">' + a(s.label) + '</a></li>').join('') + '</ul>';
+    }
+    return '<section id="' + slug + '"><h2>' + a(name) + '</h2>' + paragraphs.map(p => '<p>' + a(fill(p, firm, lang)) + '</p>').join('') + extra + '<p><small><a href="#toc">' + a(ui.top) + '</a></small></p></section>';
+  }).join('');
+  return '<!doctype html><html lang="' + lang + '"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' + headMeta
+    + '<style>html{scroll-behavior:smooth}body{font:17px/1.65 system-ui,sans-serif;max-width:850px;margin:40px auto;padding:0 20px;color:#17212c}a{color:#087b86}nav ol{columns:2;padding-left:1.4rem}section{margin:2.2rem 0;scroll-margin-top:16px}section:target h2{border-left:4px solid #087b86;padding-left:10px}main{margin:2rem 0}small{color:#555}</style></head><body>'
+    + '<header><a href="/">' + a(ui.home) + '</a> <small style="float:right">' + a(ui.lang) + ': ' + switcher + '</small></header>'
+    + '<main><h1>' + a(title) + '</h1><p><small>' + a(ui.updated) + ': <time datetime="' + LEGAL_DATE + '">' + LEGAL_DATE + '</time></small></p>'
+    + '<nav id="toc" aria-label="' + a(ui.toc) + '"><h2>' + a(ui.toc) + '</h2><ol>' + toc + '</ol></nav>' + body + '</main>'
+    + '<footer><small>' + a(firm.name) + ' · CUI ' + a(firm.cui) + '</small></footer></body></html>';
 }
 
+// Footer strip: ONE source for all network sites. Every link goes to its section of the single page (/legal/#slug).
 function stripHTML(lang, firm) {
-  const links = DOCS.map(([s, t]) => '<a href="' + route(s) + '">' + escapeHtml(t[lang][0]) + '</a>').join('');
+  const links = DOCS.map(([s, t]) => '<a href="' + anchor(s) + '">' + escapeHtml(t[lang][0]) + '</a>').join('');
   return '<style>#aiventure-legal-strip{display:block!important;width:100%!important;margin:0!important;padding:18px 20px!important;background:#000!important;color:#b9c7d8!important;border-top:1px solid #303b48!important;font:13px/1.7 Arial,sans-serif!important;text-align:center!important;position:static!important;clear:both!important}#aiventure-legal-strip p{margin:0 0 6px!important;font:13px/1.7 Arial,sans-serif!important;color:#b9c7d8!important}#aiventure-legal-strip nav{display:flex!important;flex-wrap:wrap!important;justify-content:center!important;gap:2px 16px!important}#aiventure-legal-strip nav a{display:inline!important;padding:2px 0!important;font:13px/1.7 Arial,sans-serif!important;color:#b9c7d8!important;text-decoration:none!important}#aiventure-legal-strip nav a:hover{color:#fff!important;text-decoration:underline!important}</style>'
     + '<div id="aiventure-legal-strip"><p><strong>' + escapeHtml(firm.name) + '</strong> · CUI ' + escapeHtml(firm.cui) + '</p><nav aria-label="' + escapeHtml(UI[lang].docs) + '">' + links + '</nav></div>';
 }
@@ -553,26 +485,30 @@ export default {
   async fetch(request, env = {}) {
     const url = new URL(request.url);
     const host = url.hostname.toLowerCase().replace(/^www\./, '');
-    if (!ALLOWED_HOSTS.has(host)) return new Response('Host not authorized', { status: 403 });
+    // A host outside the AiVenture network is not ours: pass through to its origin (v1.x answered 403).
+    if (!ALLOWED_HOSTS.has(host)) return fetch(request);
 
-    const path = url.pathname.replace(/\/$/, '');
+    const path = url.pathname.replace(/\/+$/, '');
     if (path === '/legal/strip.html') {
-      const firm = await loadFirm(env, 'firmsfinder.eu');
+      const firm = await loadFirm(env);
       const asked = (url.searchParams.get('host') || '').toLowerCase().replace(/^www\./, '');
       const { lang } = pickLang(ALLOWED_HOSTS.has(asked) ? asked : host, url);
       return new Response(stripHTML(lang, firm), { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'public, max-age=300', 'X-Robots-Tag': 'noindex,nofollow' } });
     }
-    const entry = docsFor(host).find(([slug]) => route(slug) === path);
-    if (entry) {
-      if (DOCS_BY_HOST[host] && env.ECBTAX_APPROVED !== '1') return new Response('Pagina este în curs de aprobare.', { status: 503, headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Retry-After': '86400', 'X-Robots-Tag': 'noindex' } });
-      const firm = await loadFirm(env, host);
-      const { lang: pl, explicit } = pickLang(host, url);
-      const lang = DOCS_BY_HOST[host] ? 'ro' : pl;
-      const headers = { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'public, max-age=300' };
-      if (NOINDEX_HOSTS.has(host)) headers['X-Robots-Tag'] = 'noindex,nofollow';
-      return new Response(documentHTML(host, entry[0], lang, explicit, firm), { headers });
+    if (path === '/legal') {
+      const firm = await loadFirm(env);
+      const { lang, explicit } = pickLang(host, url);
+      return new Response(pageHTML(host, lang, explicit, firm), { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'public, max-age=300' } });
     }
-    if (url.pathname.startsWith('/legal/')) return new Response('Not found', { status: 404 });
+    if (path.startsWith('/legal/')) {
+      const slug = path.slice('/legal/'.length);
+      if (DOCS.some(d => d[0] === slug)) {
+        const q = url.searchParams.get('lang');
+        const keep = q && LANGS.includes(q) ? '?lang=' + q : '';
+        return new Response(null, { status: 301, headers: { 'Location': PAGE + keep + '#' + slug, 'Cache-Control': 'public, max-age=3600' } });
+      }
+      return new Response('Not found', { status: 404 });
+    }
     return fetch(request);
   }
 };
