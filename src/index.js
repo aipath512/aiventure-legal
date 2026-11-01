@@ -1,5 +1,13 @@
-// LEGAL WORKER v2.0 - 2026-10-26
-// Change vs v1.10 (owner decisions of 26 Oct 2026: ONE legal page instead of 14):
+// LEGAL WORKER v2.1 - 2026-11-01 (sesiunea 0008C)
+// Change vs v2.0 (owner decision 1 Nov 2026: an EU AI Act page on every network site, "exactly like LEGAL"):
+//  - NEW page /legal/eu-ai-act/ on every domain (same /legal/* routes, no new route needed): the free EU AI Act file (RRVI),
+//    70 documents in 10 modules x 7 types, ONE page with 10 anchored sections (#m01 ... #m10) and a table of contents.
+//    Each document links to its RRVI template (/rrvi/<CODE> on firmsfinder.eu). Personalised file on request by e-mail.
+//  - The old 301 /legal/eu-ai-act -> /legal/#eu-ai-act is replaced by this page; the #eu-ai-act section of /legal/ links to it.
+//  - /legal/strip.html (shared footer) gets a second row: EU AI Act Ready badge + the 10 modules, each linking to its anchor.
+//  - The page does not claim compliance: it prepares for a remote check (ANCOM coordinates AI Act supervision in Romania,
+//    government memorandum of 12 March 2026) and says so.
+// Change v2.0 vs v1.10 (owner decisions of 26 Oct 2026: ONE legal page instead of 14):
 //  - ONE page /legal/ with the 14 documents as sections. Each section has its own anchor (id = the old slug):
 //    /legal/#privacy, /legal/#terms, /legal/#cookies, /legal/#disclaimer, /legal/#legal-notice, /legal/#gdpr-rights, /legal/#data-retention,
 //    /legal/#security, /legal/#acceptable-use, /legal/#ai-transparency, /legal/#eu-ai-act, /legal/#human-oversight, /legal/#accessibility,
@@ -348,6 +356,151 @@ const DOCS = [
       "E-mail pour les demandes juridiques et RGPD : {{email}}. Téléphone : {{phone}}."]]
   }]
 ];
+// ---- EU AI ACT page (/legal/eu-ai-act/) ----
+const AIACT_PAGE = '/legal/eu-ai-act/';
+const AIACT_DATE = '2026-11-01';
+const AIACT_BADGE = 'https://firmsfinder.eu/assets/eu-ai-act-ready-2aug2026_256x256_v1.0_2026-10-16.webp';
+const RRVI_BASE = 'https://firmsfinder.eu/rrvi/';
+// Document types, in the order of the RRVI pack (code prefix -> name per language)
+const AIACT_TYPES = [
+  ['CHK', { ro: 'Listă de verificare', en: 'Checklist', fr: 'Liste de contrôle' }],
+  ['DEC', { ro: 'Declarație', en: 'Declaration', fr: 'Déclaration' }],
+  ['DOD', { ro: 'Politică', en: 'Policy', fr: 'Politique' }],
+  ['EVID', { ro: 'Dovezi', en: 'Evidence', fr: 'Preuves' }],
+  ['PROC', { ro: 'Procedură', en: 'Procedure', fr: 'Procédure' }],
+  ['REG', { ro: 'Registru', en: 'Register', fr: 'Registre' }],
+  ['WI', { ro: 'Instrucțiune de lucru', en: 'Work instruction', fr: 'Instruction de travail' }]
+];
+// 10 modules: [number, slug, article of Regulation (EU) 2024/1689 or '', name per language]
+const AIACT_MODULES = [
+  ['01', 'inventar', '', { ro: 'Inventarul sistemelor AI', en: 'AI system inventory', fr: 'Inventaire des systèmes d’IA' }],
+  ['02', 'clasificare-risc', 'art. 6', { ro: 'Clasificarea riscului', en: 'Risk classification', fr: 'Classification des risques' }],
+  ['03', 'alfabetizare-ai', 'art. 4', { ro: 'Alfabetizarea în domeniul AI', en: 'AI literacy', fr: 'Maîtrise de l’IA' }],
+  ['04', 'practici-interzise', 'art. 5', { ro: 'Practici interzise', en: 'Prohibited practices', fr: 'Pratiques interdites' }],
+  ['05', 'risc-ridicat', 'art. 6, anexa III', { ro: 'Evaluarea sistemelor cu risc ridicat', en: 'High-risk assessment', fr: 'Évaluation des systèmes à haut risque' }],
+  ['06', 'documentatie-tehnica', 'art. 11', { ro: 'Documentația tehnică', en: 'Technical documentation', fr: 'Documentation technique' }],
+  ['07', 'supraveghere-umana', 'art. 14', { ro: 'Supravegherea umană', en: 'Human oversight', fr: 'Supervision humaine' }],
+  ['08', 'guvernanta-datelor', 'art. 10', { ro: 'Guvernanța datelor', en: 'Data governance', fr: 'Gouvernance des données' }],
+  ['09', 'jurnalizare-monitorizare', 'art. 12', { ro: 'Jurnalizare și monitorizare', en: 'Logging and monitoring', fr: 'Journalisation et surveillance' }],
+  ['10', 'raportare-incidente', 'art. 73', { ro: 'Raportarea incidentelor', en: 'Incident reporting', fr: 'Signalement des incidents' }]
+];
+const aiactAnchor = m => 'm' + m[0] + '-' + m[1];
+const AIACT_UI = {
+  ro: {
+    title: 'EU AI Act: dosarul firmei, gratuit',
+    h1: 'EU AI Act: dosarul firmei dumneavoastră, gratuit',
+    desc: 'Dosar EU AI Act gratuit: 70 de documente în 10 module (inventar, clasificarea riscului, alfabetizare AI, practici interzise, risc ridicat, documentație, supraveghere umană, date, jurnalizare, incidente), personalizat cu firma și persoana responsabilă.',
+    lead: '70 de documente în 10 module, câte 7 pe modul: listă de verificare, declarație, politică, dovezi, procedură, registru și instrucțiune de lucru. Gratuit, pentru orice firmă.',
+    how: 'Cum îl primiți',
+    how1: 'Trimiteți numele firmei și numele persoanei responsabile de AI.',
+    how2: 'Primiți pe email dosarul complet, generat cu datele firmei dumneavoastră.',
+    how3: 'Fiecare document generat are un identificator și o amprentă SHA-256, verificabile de la distanță.',
+    cta: 'Cereți dosarul gratuit pe email',
+    mailSubject: 'Dosar EU AI Act gratuit',
+    mailBody: 'Denumirea firmei:\nCUI:\nPersoana responsabilă de AI:\nEmail pentru dosar:\n',
+    verify: 'Verificare la distanță',
+    verifyText: 'Dosarul este organizat pentru o verificare la distanță din partea autorității sau a unui auditor. În România, supravegherea Regulamentului (UE) 2024/1689 este coordonată de ANCOM (memorandumul Guvernului din 12 martie 2026).',
+    limit: 'Documentele vă ajută să vă pregătiți: nu atestă conformitatea și nu înlocuiesc evaluarea fiecărui sistem AI și consultanța juridică.',
+    modules: 'Cele 10 module',
+    docsOf: 'documente',
+    art: 'Regulamentul (UE) 2024/1689',
+    template: 'șablon',
+    unique: 'Nicio altă platformă de date despre firme nu oferă un astfel de dosar.',
+    strip: 'EU AI Act, dosar gratuit (70 de documente):',
+    legalLink: 'Dosarul EU AI Act gratuit, cu cele 10 module: '
+  },
+  en: {
+    title: 'EU AI Act: your company file, free',
+    h1: 'EU AI Act: your company file, free',
+    desc: 'Free EU AI Act file: 70 documents in 10 modules (inventory, risk classification, AI literacy, prohibited practices, high risk, documentation, human oversight, data, logging, incidents), personalised with your company and responsible person.',
+    lead: '70 documents in 10 modules, 7 per module: checklist, declaration, policy, evidence, procedure, register and work instruction. Free, for any company.',
+    how: 'How to get it',
+    how1: 'Send the company name and the name of the person responsible for AI.',
+    how2: 'Receive the complete file by email, generated with your company details.',
+    how3: 'Each generated document has an identifier and a SHA-256 fingerprint that can be verified remotely.',
+    cta: 'Request the free file by email',
+    mailSubject: 'Free EU AI Act file',
+    mailBody: 'Company name:\nCompany ID (CUI/VAT):\nPerson responsible for AI:\nEmail for the file:\n',
+    verify: 'Remote verification',
+    verifyText: 'The file is organised for a remote check by the authority or an auditor. In Romania, supervision of Regulation (EU) 2024/1689 is coordinated by ANCOM (government memorandum of 12 March 2026).',
+    limit: 'The documents help you prepare: they do not certify compliance and do not replace the assessment of each AI system or legal advice.',
+    modules: 'The 10 modules',
+    docsOf: 'documents',
+    art: 'Regulation (EU) 2024/1689',
+    template: 'template',
+    unique: 'No other company-data platform offers such a file.',
+    strip: 'EU AI Act, free file (70 documents):',
+    legalLink: 'The free EU AI Act file, with its 10 modules: '
+  },
+  fr: {
+    title: 'EU AI Act : le dossier de votre entreprise, gratuit',
+    h1: 'EU AI Act : le dossier de votre entreprise, gratuit',
+    desc: 'Dossier EU AI Act gratuit : 70 documents en 10 modules (inventaire, classification des risques, maîtrise de l’IA, pratiques interdites, haut risque, documentation, supervision humaine, données, journalisation, incidents), personnalisé avec votre entreprise et la personne responsable.',
+    lead: '70 documents en 10 modules, 7 par module : liste de contrôle, déclaration, politique, preuves, procédure, registre et instruction de travail. Gratuit, pour toute entreprise.',
+    how: 'Comment le recevoir',
+    how1: 'Envoyez le nom de l’entreprise et le nom de la personne responsable de l’IA.',
+    how2: 'Recevez par e-mail le dossier complet, généré avec les données de votre entreprise.',
+    how3: 'Chaque document généré a un identifiant et une empreinte SHA-256, vérifiables à distance.',
+    cta: 'Demander le dossier gratuit par e-mail',
+    mailSubject: 'Dossier EU AI Act gratuit',
+    mailBody: 'Nom de l’entreprise :\nIdentifiant (CUI/TVA) :\nPersonne responsable de l’IA :\nE-mail pour le dossier :\n',
+    verify: 'Vérification à distance',
+    verifyText: 'Le dossier est organisé pour une vérification à distance par l’autorité ou un auditeur. En Roumanie, la surveillance du règlement (UE) 2024/1689 est coordonnée par l’ANCOM (mémorandum du gouvernement du 12 mars 2026).',
+    limit: 'Les documents vous aident à vous préparer : ils n’attestent pas la conformité et ne remplacent ni l’évaluation de chaque système d’IA ni un conseil juridique.',
+    modules: 'Les 10 modules',
+    docsOf: 'documents',
+    art: 'Règlement (UE) 2024/1689',
+    template: 'modèle',
+    unique: 'Aucune autre plateforme de données d’entreprises ne propose un tel dossier.',
+    strip: 'EU AI Act, dossier gratuit (70 documents) :',
+    legalLink: 'Le dossier EU AI Act gratuit, avec ses 10 modules : '
+  }
+};
+
+function aiactPageHTML(host, lang, firm) {
+  const t = AIACT_UI[lang];
+  const a = escapeHtml;
+  const origin = 'https://' + host;
+  const pageUrl = origin + AIACT_PAGE;
+  const mail = 'mailto:' + firm.email + '?subject=' + encodeURIComponent(t.mailSubject + ' — ' + host) + '&body=' + encodeURIComponent(t.mailBody);
+  const switcher = LANGS.map(l => l === lang ? '<strong>' + l.toUpperCase() + '</strong>' : '<a href="' + AIACT_PAGE + '?lang=' + l + '" hreflang="' + l + '">' + l.toUpperCase() + '</a>').join(' · ');
+  const toc = AIACT_MODULES.map(m => '<li><a href="#' + aiactAnchor(m) + '">' + a(m[3][lang]) + '</a></li>').join('');
+  const sections = AIACT_MODULES.map(m => {
+    const n = Number(m[0]);
+    const docs = AIACT_TYPES.map(([code, names]) => {
+      const c = code + '-' + String(n).padStart(3, '0');
+      return '<li><a href="' + RRVI_BASE + c + '" rel="noopener">' + c + '</a> — ' + a(names[lang]) + '</li>';
+    }).join('');
+    const art = m[2] ? '<p><small>' + a(t.art) + ', ' + a(m[2]) + '</small></p>' : '';
+    return '<section id="' + aiactAnchor(m) + '"><h2>' + m[0] + ' · ' + a(m[3][lang]) + '</h2>' + art + '<ul>' + docs + '</ul><p><small><a href="#toc">' + a(UI[lang].top) + '</a></small></p></section>';
+  }).join('');
+  const graph = {
+    '@context': 'https://schema.org',
+    '@graph': [{
+      '@type': 'WebPage', '@id': pageUrl + '#webpage', url: pageUrl, name: t.title, description: t.desc, inLanguage: lang,
+      dateModified: AIACT_DATE, isAccessibleForFree: true, isPartOf: { '@id': origin + '/#website' },
+      about: { '@type': 'Legislation', name: 'Regulation (EU) 2024/1689 (AI Act)', legislationIdentifier: '32024R1689', url: 'https://eur-lex.europa.eu/eli/reg/2024/1689/oj' },
+      publisher: { '@id': 'https://aiventure.ro/#organization' },
+      primaryImageOfPage: AIACT_BADGE,
+      hasPart: AIACT_MODULES.map(m => ({ '@type': 'WebPageElement', '@id': pageUrl + '#' + aiactAnchor(m), name: m[3][lang], url: pageUrl + '#' + aiactAnchor(m) }))
+    }, { '@type': 'Organization', '@id': 'https://aiventure.ro/#organization', name: 'AiVenture S.R.L.', url: 'https://aiventure.ro/' }]
+  };
+  const ld = JSON.stringify(graph).replace(/</g, '\\u003c');
+  return '<!doctype html><html lang="' + lang + '"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
+    + '<title>' + a(t.title) + ' — ' + a(firm.brand) + '</title><meta name="description" content="' + a(t.desc) + '"><meta name="robots" content="index,follow">'
+    + '<link rel="canonical" href="' + a(pageUrl) + '"><meta property="og:title" content="' + a(t.title) + '"><meta property="og:description" content="' + a(t.desc) + '"><meta property="og:url" content="' + a(pageUrl) + '"><meta property="og:image" content="' + AIACT_BADGE + '">'
+    + '<script type="application/ld+json">' + ld + '</script>'
+    + '<style>html{scroll-behavior:smooth}body{font:17px/1.65 system-ui,sans-serif;max-width:850px;margin:40px auto;padding:0 20px;color:#17212c}a{color:#087b86}.hero{display:flex;gap:20px;align-items:center;flex-wrap:wrap}.hero img{width:120px;height:120px}nav ol{columns:2;padding-left:1.4rem}section{margin:2rem 0;scroll-margin-top:16px}section:target h2{border-left:4px solid #087b86;padding-left:10px}.cta{display:inline-block;background:#087b86;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:700;margin:8px 0}.limit{border:1px solid #d4a017;background:#fff8e1;padding:10px 14px;border-radius:6px}small{color:#555}</style></head><body>'
+    + '<header><a href="/">' + a(UI[lang].home) + '</a> · <a href="' + PAGE + '">' + a(UI[lang].docs) + '</a> <small style="float:right">' + a(UI[lang].lang) + ': ' + switcher + '</small></header>'
+    + '<main><div class="hero"><img src="' + AIACT_BADGE + '" width="120" height="120" alt="EU AI Act Ready"><div><h1>' + a(t.h1) + '</h1><p><small>' + a(UI[lang].updated) + ': <time datetime="' + AIACT_DATE + '">' + AIACT_DATE + '</time></small></p></div></div>'
+    + '<p>' + a(t.lead) + '</p><p><strong>' + a(t.unique) + '</strong></p>'
+    + '<h2>' + a(t.how) + '</h2><ol><li>' + a(t.how1) + '</li><li>' + a(t.how2) + '</li><li>' + a(t.how3) + '</li></ol>'
+    + '<p><a class="cta" href="' + a(mail) + '">' + a(t.cta) + '</a></p>'
+    + '<h2>' + a(t.verify) + '</h2><p>' + a(t.verifyText) + '</p><p class="limit">' + a(t.limit) + '</p>'
+    + '<nav id="toc" aria-label="' + a(t.modules) + '"><h2>' + a(t.modules) + '</h2><ol>' + toc + '</ol></nav>' + sections + '</main>'
+    + '<footer><small>' + a(firm.name) + ' · CUI ' + a(firm.cui) + ' · <a href="' + PAGE + '">' + a(UI[lang].docs) + '</a></small></footer></body></html>';
+}
+
 const MISSING = "[de completat]";
 const escapeHtml = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const PAGE = '/legal/';
@@ -464,6 +617,9 @@ function pageHTML(host, lang, explicit, firm) {
     if (slug === 'legal-notice' && Array.isArray(firm.social) && firm.social.length) {
       extra = '<p>' + a(ui.official) + ':</p><ul>' + firm.social.map(s => '<li><a href="' + a(s.url) + '" rel="me noopener">' + a(s.label) + '</a></li>').join('') + '</ul>';
     }
+    if (slug === 'eu-ai-act') {
+      extra = '<p>' + a(AIACT_UI[lang].legalLink) + '<a href="' + AIACT_PAGE + '">' + a(AIACT_UI[lang].title) + '</a></p>';
+    }
     return '<section id="' + slug + '"><h2>' + a(name) + '</h2>' + paragraphs.map(p => '<p>' + a(fill(p, firm, lang)) + '</p>').join('') + extra + '<p><small><a href="#toc">' + a(ui.top) + '</a></small></p></section>';
   }).join('');
   return '<!doctype html><html lang="' + lang + '"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' + headMeta
@@ -478,7 +634,17 @@ function pageHTML(host, lang, explicit, firm) {
 function stripHTML(lang, firm) {
   const links = DOCS.map(([s, t]) => '<a href="' + anchor(s) + '">' + escapeHtml(t[lang][0]) + '</a>').join('');
   return '<style>#aiventure-legal-strip{display:block!important;width:100%!important;margin:0!important;padding:18px 20px!important;background:#000!important;color:#b9c7d8!important;border-top:1px solid #303b48!important;font:13px/1.7 Arial,sans-serif!important;text-align:center!important;position:static!important;clear:both!important}#aiventure-legal-strip p{margin:0 0 6px!important;font:13px/1.7 Arial,sans-serif!important;color:#b9c7d8!important}#aiventure-legal-strip nav{display:flex!important;flex-wrap:wrap!important;justify-content:center!important;gap:2px 16px!important}#aiventure-legal-strip nav a{display:inline!important;padding:2px 0!important;font:13px/1.7 Arial,sans-serif!important;color:#b9c7d8!important;text-decoration:none!important}#aiventure-legal-strip nav a:hover{color:#fff!important;text-decoration:underline!important}</style>'
-    + '<div id="aiventure-legal-strip"><p><strong>' + escapeHtml(firm.name) + '</strong> · CUI ' + escapeHtml(firm.cui) + '</p><nav aria-label="' + escapeHtml(UI[lang].docs) + '">' + links + '</nav></div>';
+    + '<div id="aiventure-legal-strip"><p><strong>' + escapeHtml(firm.name) + '</strong> · CUI ' + escapeHtml(firm.cui) + '</p><nav aria-label="' + escapeHtml(UI[lang].docs) + '">' + links + '</nav>'
+    + aiactStripRow(lang) + '</div>';
+}
+
+// Second row of the shared footer: EU AI Act Ready badge + the 10 modules, each linking to its section of /legal/eu-ai-act/.
+function aiactStripRow(lang) {
+  const t = AIACT_UI[lang];
+  const mods = AIACT_MODULES.map(m => '<a href="' + AIACT_PAGE + '#' + aiactAnchor(m) + '">' + escapeHtml(m[3][lang]) + '</a>').join('');
+  return '<style>#aiventure-aiact{display:flex!important;flex-wrap:wrap!important;align-items:center!important;justify-content:center!important;gap:8px 14px!important;margin:14px 0 0!important;padding-top:12px!important;border-top:1px solid #303b48!important}#aiventure-aiact img{width:56px!important;height:56px!important;display:inline-block!important}#aiventure-aiact a{color:#b9c7d8!important;text-decoration:none!important;font:13px/1.7 Arial,sans-serif!important}#aiventure-aiact a:hover{color:#fff!important;text-decoration:underline!important}#aiventure-aiact strong a{color:#fff!important;font-weight:700!important}</style>'
+    + '<div id="aiventure-aiact"><a href="' + AIACT_PAGE + '"><img src="' + AIACT_BADGE + '" width="56" height="56" alt="EU AI Act Ready" loading="lazy"></a>'
+    + '<strong><a href="' + AIACT_PAGE + '">' + escapeHtml(t.strip) + '</a></strong>' + mods + '</div>';
 }
 
 export default {
@@ -494,6 +660,11 @@ export default {
       const asked = (url.searchParams.get('host') || '').toLowerCase().replace(/^www\./, '');
       const { lang } = pickLang(ALLOWED_HOSTS.has(asked) ? asked : host, url);
       return new Response(stripHTML(lang, firm), { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'public, max-age=300', 'X-Robots-Tag': 'noindex,nofollow' } });
+    }
+    if (path === '/legal/eu-ai-act') {
+      const firm = await loadFirm(env);
+      const { lang } = pickLang(host, url);
+      return new Response(aiactPageHTML(host, lang, firm), { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'public, max-age=300' } });
     }
     if (path === '/legal') {
       const firm = await loadFirm(env);

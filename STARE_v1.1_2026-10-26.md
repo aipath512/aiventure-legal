@@ -25,3 +25,11 @@
 ## Limite cunoscute
 - Rutele `<domeniu>/legal/*` sunt configurate în Cloudflare, nu în repo.
 - Datele de identitate sunt încă în `FIRM_DEFAULTS`; mutarea în `aiventure-identity` e un pas separat.
+
+## v2.1 — 2026-11-01 (sesiunea 0008C)
+- Pagina nouă `/legal/eu-ai-act/` pe toate domeniile rețelei (aceleași rute `/legal/*`): dosarul EU AI Act gratuit (RRVI), 70 de documente în 10 module × 7 tipuri, o singură pagină cu 10 secțiuni ancorate (`#m01-inventar` … `#m10-raportare-incidente`), cuprins, RO/EN/FR.
+- Fiecare document trimite la șablonul lui RRVI (`https://firmsfinder.eu/rrvi/<COD>`). Dosarul personalizat se cere pe email (contact@5thelement.ai), până când formularul de generare e testat.
+- Pagina nu afirmă conformitatea; spune că ANCOM coordonează supravegherea AI Act în România (memorandumul Guvernului din 12.03.2026).
+- `/legal/strip.html` are un al doilea rând: insigna EU AI Act Ready + cele 10 module, fiecare spre ancora lui.
+- Secțiunea `#eu-ai-act` din `/legal/` trimite spre pagina nouă.
+- De făcut: intrarea `/legal/eu-ai-act/` în sitemap-ul fiecărui site; subsolul comun lipsește încă de pe domeniile fără Worker de subsol.
