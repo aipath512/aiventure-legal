@@ -1,4 +1,6 @@
-// LEGAL WORKER v2.2 - 2026-11-18
+// LEGAL WORKER v2.3 - 2026-11-18
+// Change vs v2.2: the Organization node on /legal/ and /legal/eu-ai-act/ carries the full identity (CUI, VAT, EUID, ONRC, address, sameAs).
+// v2.2 - 2026-11-18
 // Change vs v2.1 (owner decision 18 Nov 2026, aiventure-identity D10: one firm, many sites, ONE schema.org @id):
 //  - Organization @id is https://5thelement.ai/#organization everywhere (was https://5thelement.ai/#organization).
 //  - The EU AI Act Ready badge is served by THIS Worker on every domain at /legal/<badge file> (copy kept in
@@ -362,6 +364,18 @@ const DOCS = [
       "E-mail pour les demandes juridiques et RGPD : {{email}}. Téléphone : {{phone}}."]]
   }]
 ];
+// Organization: ONE entity on every domain (aiventure-identity D10). Same data as the identity master.
+const ORG_NODE = {
+  '@type': 'Organization', '@id': 'https://5thelement.ai/#organization', name: 'AiVenture S.R.L.', legalName: 'AiVenture S.R.L.',
+  url: 'https://5thelement.ai/', taxID: '51415878', vatID: 'RO51415878', foundingDate: '2025-03-07',
+  identifier: [
+    { '@type': 'PropertyValue', propertyID: 'CUI', value: '51415878' },
+    { '@type': 'PropertyValue', propertyID: 'EUID', value: 'ROONRC.J2025016406000' },
+    { '@type': 'PropertyValue', propertyID: 'ONRC', value: 'J2025016406000' }
+  ],
+  address: { '@type': 'PostalAddress', streetAddress: 'Drumul Pădurea Pustnicul nr. 141C, Corp A, Etaj 2, Ap. 5', addressLocality: 'București', addressRegion: 'Sector 1', postalCode: '014044', addressCountry: 'RO' },
+  sameAs: ['https://aiventure.ro/', 'https://www.linkedin.com/company/107338970', 'https://www.linkedin.com/showcase/5thelement-ai/', 'https://www.crunchbase.com/organization/aiventure-s-r-l', 'https://www.facebook.com/people/Aiventure/61573220584246/', 'https://x.com/aipath512', 'https://www.youtube.com/@AIVenture-q8u', 'https://medium.com/@aipath512', 'https://www.reddit.com/user/AiVentureRO/']
+};
 // ---- EU AI ACT page (/legal/eu-ai-act/) ----
 const AIACT_PAGE = '/legal/eu-ai-act/';
 const AIACT_DATE = '2026-11-01';
@@ -491,7 +505,7 @@ function aiactPageHTML(host, lang, firm) {
       publisher: { '@id': 'https://5thelement.ai/#organization' },
       primaryImageOfPage: origin + AIACT_BADGE,
       hasPart: AIACT_MODULES.map(m => ({ '@type': 'WebPageElement', '@id': pageUrl + '#' + aiactAnchor(m), name: m[3][lang], url: pageUrl + '#' + aiactAnchor(m) }))
-    }, { '@type': 'Organization', '@id': 'https://5thelement.ai/#organization', name: 'AiVenture S.R.L.', url: 'https://5thelement.ai/' }]
+    }, ORG_NODE]
   };
   const ld = JSON.stringify(graph).replace(/</g, '\\u003c');
   return '<!doctype html><html lang="' + lang + '"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
@@ -569,7 +583,7 @@ function etalonHead(host, title, description, e, sections) {
         '@type': 'WebSite', '@id': origin + '/#website', url: origin + '/', name: e.site_name,
         publisher: org, inLanguage: e.in_language, publishingPrinciples: origin + e.publishing_principles
       },
-      { '@type': 'Organization', '@id': e.org_id, name: e.org_name, url: e.org_url },
+      (e.org_id === ORG_NODE['@id'] ? ORG_NODE : { '@type': 'Organization', '@id': e.org_id, name: e.org_name, url: e.org_url }),
       {
         '@type': 'BreadcrumbList', '@id': pageUrl + '#breadcrumb',
         itemListElement: [
