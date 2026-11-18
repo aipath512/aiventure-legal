@@ -1,4 +1,10 @@
-// LEGAL WORKER v2.1 - 2026-11-01 (sesiunea 0008C)
+// LEGAL WORKER v2.2 - 2026-11-18
+// Change vs v2.1 (owner decision 18 Nov 2026, aiventure-identity D10: one firm, many sites, ONE schema.org @id):
+//  - Organization @id is https://5thelement.ai/#organization everywhere (was https://5thelement.ai/#organization).
+//  - The EU AI Act Ready badge is served by THIS Worker on every domain at /legal/<badge file> (copy kept in
+//    aiventure-identity/brand/), no longer loaded from firmsfinder.eu. The footer strip uses a relative path,
+//    so each site shows the badge from its own domain.
+// v2.1 - 2026-11-01 (sesiunea 0008C)
 // Change vs v2.0 (owner decision 1 Nov 2026: an EU AI Act page on every network site, "exactly like LEGAL"):
 //  - NEW page /legal/eu-ai-act/ on every domain (same /legal/* routes, no new route needed): the free EU AI Act file (RRVI),
 //    70 documents in 10 modules x 7 types, ONE page with 10 anchored sections (#m01 ... #m10) and a table of contents.
@@ -55,9 +61,9 @@ const ETALON = {
     author_meta: "AiVenture S.R.L.",
     referrer: "strict-origin-when-cross-origin",
     home_name: "Acasă",
-    org_id: "https://aiventure.ro/#organization",
+    org_id: "https://5thelement.ai/#organization",
     org_name: "AiVenture S.R.L.",
-    org_url: "https://aiventure.ro/",
+    org_url: "https://5thelement.ai/",
     usage_info: "/legal/#terms",
     publishing_principles: "/legal/#ai-transparency"
   }
@@ -359,7 +365,9 @@ const DOCS = [
 // ---- EU AI ACT page (/legal/eu-ai-act/) ----
 const AIACT_PAGE = '/legal/eu-ai-act/';
 const AIACT_DATE = '2026-11-01';
-const AIACT_BADGE = 'https://firmsfinder.eu/assets/eu-ai-act-ready-2aug2026_256x256_v1.0_2026-10-16.webp';
+const AIACT_BADGE_FILE = 'eu-ai-act-ready-2aug2026_256x256_v1.0_2026-10-16.webp';
+const AIACT_BADGE = '/legal/' + AIACT_BADGE_FILE; // relative: served by this Worker on every domain
+const AIACT_BADGE_SOURCE = 'https://raw.githubusercontent.com/aipath512/aiventure-identity/main/brand/' + AIACT_BADGE_FILE;
 const RRVI_BASE = 'https://firmsfinder.eu/rrvi/';
 // Document types, in the order of the RRVI pack (code prefix -> name per language)
 const AIACT_TYPES = [
@@ -480,15 +488,15 @@ function aiactPageHTML(host, lang, firm) {
       '@type': 'WebPage', '@id': pageUrl + '#webpage', url: pageUrl, name: t.title, description: t.desc, inLanguage: lang,
       dateModified: AIACT_DATE, isAccessibleForFree: true, isPartOf: { '@id': origin + '/#website' },
       about: { '@type': 'Legislation', name: 'Regulation (EU) 2024/1689 (AI Act)', legislationIdentifier: '32024R1689', url: 'https://eur-lex.europa.eu/eli/reg/2024/1689/oj' },
-      publisher: { '@id': 'https://aiventure.ro/#organization' },
-      primaryImageOfPage: AIACT_BADGE,
+      publisher: { '@id': 'https://5thelement.ai/#organization' },
+      primaryImageOfPage: origin + AIACT_BADGE,
       hasPart: AIACT_MODULES.map(m => ({ '@type': 'WebPageElement', '@id': pageUrl + '#' + aiactAnchor(m), name: m[3][lang], url: pageUrl + '#' + aiactAnchor(m) }))
-    }, { '@type': 'Organization', '@id': 'https://aiventure.ro/#organization', name: 'AiVenture S.R.L.', url: 'https://aiventure.ro/' }]
+    }, { '@type': 'Organization', '@id': 'https://5thelement.ai/#organization', name: 'AiVenture S.R.L.', url: 'https://5thelement.ai/' }]
   };
   const ld = JSON.stringify(graph).replace(/</g, '\\u003c');
   return '<!doctype html><html lang="' + lang + '"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
     + '<title>' + a(t.title) + ' — ' + a(firm.brand) + '</title><meta name="description" content="' + a(t.desc) + '"><meta name="robots" content="index,follow">'
-    + '<link rel="canonical" href="' + a(pageUrl) + '"><meta property="og:title" content="' + a(t.title) + '"><meta property="og:description" content="' + a(t.desc) + '"><meta property="og:url" content="' + a(pageUrl) + '"><meta property="og:image" content="' + AIACT_BADGE + '">'
+    + '<link rel="canonical" href="' + a(pageUrl) + '"><meta property="og:title" content="' + a(t.title) + '"><meta property="og:description" content="' + a(t.desc) + '"><meta property="og:url" content="' + a(pageUrl) + '"><meta property="og:image" content="' + origin + AIACT_BADGE + '">'
     + '<script type="application/ld+json">' + ld + '</script>'
     + '<style>html{scroll-behavior:smooth}body{font:17px/1.65 system-ui,sans-serif;max-width:850px;margin:40px auto;padding:0 20px;color:#17212c}a{color:#087b86}.hero{display:flex;gap:20px;align-items:center;flex-wrap:wrap}.hero img{width:120px;height:120px}nav ol{columns:2;padding-left:1.4rem}section{margin:2rem 0;scroll-margin-top:16px}section:target h2{border-left:4px solid #087b86;padding-left:10px}.cta{display:inline-block;background:#087b86;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:700;margin:8px 0}.limit{border:1px solid #d4a017;background:#fff8e1;padding:10px 14px;border-radius:6px}small{color:#555}</style></head><body>'
     + '<header><a href="/">' + a(UI[lang].home) + '</a> · <a href="' + PAGE + '">' + a(UI[lang].docs) + '</a> <small style="float:right">' + a(UI[lang].lang) + ': ' + switcher + '</small></header>'
@@ -655,6 +663,11 @@ export default {
     if (!ALLOWED_HOSTS.has(host)) return fetch(request);
 
     const path = url.pathname.replace(/\/+$/, '');
+    if (path === AIACT_BADGE) {
+      const r = await fetch(AIACT_BADGE_SOURCE, { cf: { cacheEverything: true, cacheTtl: 86400 } });
+      if (!r.ok) return new Response('Not found', { status: 404 });
+      return new Response(r.body, { headers: { 'Content-Type': 'image/webp', 'Cache-Control': 'public, max-age=86400' } });
+    }
     if (path === '/legal/strip.html') {
       const firm = await loadFirm(env);
       const asked = (url.searchParams.get('host') || '').toLowerCase().replace(/^www\./, '');
