@@ -1,4 +1,6 @@
-// LEGAL WORKER v2.3 - 2026-11-18
+// LEGAL WORKER v2.4 - 2026-11-18
+// Change vs v2.3: /legal/ on every domain (not only the firmsfinder.eu etalon) carries a JSON-LD WebPage + the full Organization node.
+// v2.3 - 2026-11-18
 // Change vs v2.2: the Organization node on /legal/ and /legal/eu-ai-act/ carries the full identity (CUI, VAT, EUID, ONRC, address, sameAs).
 // v2.2 - 2026-11-18
 // Change vs v2.1 (owner decision 18 Nov 2026, aiventure-identity D10: one firm, many sites, ONE schema.org @id):
@@ -630,7 +632,10 @@ function pageHTML(host, lang, explicit, firm) {
   const etalon = ETALON[host] && lang === ETALON[host].html_lang ? ETALON[host] : null;
   const headMeta = etalon
     ? etalonHead(host, title, description, etalon, sections)
-    : '<meta name="robots" content="index,follow"><title>' + a(title) + ' — ' + a(firm.brand) + '</title><meta name="description" content="' + a(description) + '"><link rel="canonical" href="https://' + host + PAGE + '">';
+    : '<meta name="robots" content="index,follow"><title>' + a(title) + ' — ' + a(firm.brand) + '</title><meta name="description" content="' + a(description) + '"><link rel="canonical" href="https://' + host + PAGE + '">'
+      + '<script type="application/ld+json">' + JSON.stringify({ '@context': 'https://schema.org', '@graph': [
+          { '@type': 'WebPage', '@id': 'https://' + host + PAGE + '#webpage', url: 'https://' + host + PAGE, name: title, inLanguage: lang, publisher: { '@id': ORG_NODE['@id'] }, about: { '@id': ORG_NODE['@id'] } },
+          ORG_NODE] }).replace(/</g, '\\u003c') + '</script>';
   const switcher = LANGS.map(l => l === lang ? '<strong>' + l.toUpperCase() + '</strong>' : '<a href="' + PAGE + '?lang=' + l + '" hreflang="' + l + '">' + l.toUpperCase() + '</a>').join(' · ');
   const toc = sections.map(([slug, name]) => '<li><a href="#' + slug + '">' + a(name) + '</a></li>').join('');
   const body = DOCS.map(([slug, t]) => {
